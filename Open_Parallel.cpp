@@ -1,5 +1,5 @@
 //This is the simulation of TASEP for open boundary conditions using a 
-//particle oriented approach and for Random Sequential Update
+//particle oriented approach and for Parallel Update
 
 #include<iostream>
 #include<stdlib.h>
@@ -12,7 +12,7 @@ using namespace std;
 #define T_MAX 10000	//To determine number of points to plot
 #define CHECK_POINT N/10 //Point where we check J
 #define N_RUNS 100		//To define number of runs to take avg
-#define FILE_NAME "results_beta_try91.dat"	//File to output data
+#define FILE_NAME "results_beta_try82.dat"	//File to output data
 #define FILE_NAME_CURRENT "current82.dat"	//File to output current
 #define WARM_UP T_MAX/10	//Time for which warmup is assumed
 
@@ -157,12 +157,13 @@ void print(int a[], int n){
 
 void move(int time1){
 
+	check_list moves;
 
 	if(track[0] == 0 && rand1() < alpha){	//To see if particle added
 
 		track[0] = 1;
 
-		if(list.q>= 100){
+		if(list.q >= 100){
 			cout<<"here1"<<endl;
 		}
 
@@ -177,46 +178,59 @@ void move(int time1){
 		list.remove(N-1);
 	}
 
+	//cout<<endl;
+
 	for(int i= 0; i<list.q; i++){
 
-		int num = ret_rand(list.q);		//Number of list picked
+		int num = i;		//To update for parallel
 
 		int t = list.a[num];	//Position from track seen
 
 		if(t != N-1){			//Any other case for a particle
 
 			int pos = t;
+
 			int next_pos = t+1;
 
-
 			if(track[next_pos] == 0){
+
+
 
 				float prob_check = rand1();
 			
 				if( prob_check < P){
 
-					if(pos == CHECK_POINT){
-						count++;
-					}
-
-					if(time1 >= WARM_UP){
-						flux[pos]++;
-					}
-
-					track[pos] =  0;
-					track[next_pos] = 1;
-
-					list.a[num] = next_pos;
+					//cout<<pos<<" ";
+					moves.append(num);	
 
 				}
-
 			}
-
-
 		}	
+	}
 
+	//cout<<endl;
+
+	for(int i = 0; i<moves.q; i++){
+
+		int t = moves.a[i];
+
+		int pos = list.a[t];
+		int next_pos = pos+1;
+
+		if(time1 >= WARM_UP){
+			flux[pos]++;
+		}
+
+		track[pos] =  0;
+		track[next_pos] = 1;
+
+		//cout<<next_pos<<"/";
+
+		list.a[t] = next_pos;
 
 	}
+	//cout<<endl;
+
 }
 
 
@@ -247,6 +261,10 @@ int main(){
 			move(time1);
 /*
 			if(runs == 10){
+				print(track, N);
+			}
+*/	
+/*			if(runs == 5){
 				print(track, N);
 			}
 */
